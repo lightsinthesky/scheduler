@@ -1,15 +1,17 @@
 // Vendor Libraries
-import React from 'react'
-import PropTypes from 'prop-types';
-import { DragSource } from 'react-dnd'
-import { connect } from 'react-redux'
+import React from "react";
+import PropTypes from "prop-types";
+import { DragSource } from "react-dnd";
+import { connect } from "react-redux";
 
 // Local Libraries
-import { moveEvent, updateEventDuration } from './actions/events'
-import { ItemTypes } from './constants'
+import { moveEvent, updateEventDuration } from "./actions/events";
+import { ItemTypes } from "./constants";
+
+import Link from "./link";
 
 // Styles
-import { eventHandleStyles, eventStyles, resizerStyles, boxStyles } from './styles'
+import { eventHandleStyles, eventStyles, resizerStyles, boxStyles } from "./styles";
 
 /* globals document */
 
@@ -19,30 +21,24 @@ const eventSource = {
       resource: props.resource,
       date: props.startDate,
       id: props.id
-    }
+    };
   },
   endDrag(props, monitor, component) {
-    if (!monitor.didDrop()) return
+    if (!monitor.didDrop()) return;
 
-    component.props.dispatch(
-      moveEvent(
-        props,
-        monitor.getDropResult(),
-        props.eventChanged
-      )
-    )
+    component.props.dispatch(moveEvent(props, monitor.getDropResult(), props.eventChanged));
   },
   canDrag(props) {
-    return !props.disabled
+    return !props.disabled;
   }
-}
+};
 
 function collect(connect, monitor) {
   return {
     connectDragSource: connect.dragSource(),
     isDragging: monitor.isDragging(),
     connectDragPreview: connect.dragPreview()
-  }
+  };
 }
 
 @DragSource(ItemTypes.EVENT, eventSource, collect)
@@ -65,56 +61,56 @@ class Event extends React.Component {
     connectDragPreview: PropTypes.func.isRequired,
     rowHeight: PropTypes.number.isRequired,
     children: PropTypes.node
-  }
+  };
 
   constructor(props) {
-    super(props)
+    super(props);
 
-    this.state = {}
+    this.state = {};
   }
 
   componentWillMount() {
     const { duration, cellWidth } = this.props,
-          width = (duration * cellWidth) === 0 ? cellWidth : (duration * cellWidth) - duration - 9
+      width = duration * cellWidth === 0 ? cellWidth : duration * cellWidth - duration - 9;
 
-    this.setState({ cellWidth, width, startWidth: width })
+    this.setState({ cellWidth, width, startWidth: width });
   }
 
   componentDidMount() {
-    this.refs.resizer.addEventListener('mousedown', this.initDrag, false)
+    this.refs.resizer.addEventListener("mousedown", this.initDrag, false);
   }
 
   componentWillReceiveProps(nextProps) {
     const { duration, cellWidth } = nextProps,
-          width = (duration * cellWidth) === 0 ? cellWidth : duration * cellWidth - duration - 9
+      width = duration * cellWidth === 0 ? cellWidth : duration * cellWidth - duration - 9;
 
-    this.setState({ duration, width, startWidth: width })
+    this.setState({ duration, width, startWidth: width });
   }
 
-  initDrag = (ev) => {
-    ev.stopPropagation()
+  initDrag = ev => {
+    ev.stopPropagation();
 
     this.setState({
       startX: ev.clientX
-    })
+    });
 
-    document.documentElement.addEventListener('mousemove', this.doDrag, false)
-    document.documentElement.addEventListener('mouseup', this.stopDrag, false)
-  }
+    document.documentElement.addEventListener("mousemove", this.doDrag, false);
+    document.documentElement.addEventListener("mouseup", this.stopDrag, false);
+  };
 
-  doDrag = (ev) => {
-    ev.stopPropagation()
+  doDrag = ev => {
+    ev.stopPropagation();
     const { startWidth, startX } = this.state,
-          newWidth = (startWidth + ev.clientX - startX)
+      newWidth = startWidth + ev.clientX - startX;
 
-    this.setState({ width: newWidth })
-  }
+    this.setState({ width: newWidth });
+  };
 
-  stopDrag = (ev) => {
-    ev.stopPropagation()
+  stopDrag = ev => {
+    ev.stopPropagation();
     const { eventResized, disabled, dispatch, id, title, startDate, resource, styles } = this.props,
-          { width } = this.state,
-          newDuration = this.roundToNearest(width)
+      { width } = this.state,
+      newDuration = this.roundToNearest(width);
 
     dispatch(
       updateEventDuration(
@@ -122,47 +118,71 @@ class Event extends React.Component {
         newDuration,
         eventResized
       )
-    )
+    );
 
-    document.documentElement.removeEventListener('mousemove', this.doDrag, false)
-    document.documentElement.removeEventListener('mouseup', this.stopDrag, false)
-  }
+    document.documentElement.removeEventListener("mousemove", this.doDrag, false);
+    document.documentElement.removeEventListener("mouseup", this.stopDrag, false);
+  };
 
   roundToNearest(numToRound) {
-    return Math.ceil(numToRound / this.props.cellWidth)
+    return Math.ceil(numToRound / this.props.cellWidth);
   }
 
   dispatchEventClick(ev) {
-    ev.stopPropagation()
-    this.props.eventClicked(this.props)
+    ev.stopPropagation();
+    this.props.eventClicked(this.props);
   }
 
   render() {
-    const { styles, isDragging, connectDragSource, connectDragPreview, id, title, children, rowHeight, ...rest } = this.props,
-          { width } = this.state,
-          resizerStyleMerge = Object.assign({ height: '100%' }, resizerStyles),
-          defaultStyles = { color: '#000', backgroundColor: 'darkgrey' },
-          eventStyleMerge = Object.assign({ width }, styles || defaultStyles, eventStyles),
-          opacity = isDragging ? 0 : 1,
-          boxStyleMerge = Object.assign({ width, opacity }, boxStyles)
+    const {
+      styles,
+      isDragging,
+      connectDragSource,
+      connectDragPreview,
+      id,
+      title,
+      children,
+      rowHeight,
+      color,
+      renderer,
+      link,
+      ...rest
+    } = this.props;
+
+    const { width } = this.state;
+
+    let resizerStyleMerge = Object.assign({ height: "100%" }, resizerStyles);
+    let defaultStyles = { color: "#fff", backgroundColor: color };
+    let eventStyleMerge = Object.assign({ width }, styles || defaultStyles, eventStyles);
+    let opacity = isDragging ? 0 : 1;
+    let boxStyleMerge = Object.assign({ width, opacity }, boxStyles);
+
+    // link to - how?
 
     return (
-      <div className='event-box' style={boxStyleMerge}>
-        { isDragging ? null :
-          connectDragPreview(
-            <div key={id} className='event' style={eventStyleMerge} onClick={::this.dispatchEventClick}>
-              { connectDragSource(
-                  <span style={eventHandleStyles} className='event-handle'></span>
-                )
-              }
-              {title}
-            </div>
-          )
-        }
-        <span className='resizer' style={resizerStyleMerge} ref='resizer'></span>
+      <div className="event-box" style={boxStyleMerge}>
+        {isDragging
+          ? null
+          : connectDragPreview(
+              <div
+                key={id}
+                className="event"
+                style={eventStyleMerge}
+                onClick={::this.dispatchEventClick}
+              >
+                {connectDragSource(<span style={eventHandleStyles} className="event-handle" />)}
+                {renderer(this.props)}
+              </div>
+            )}
+        <span className="resizer" style={resizerStyleMerge} ref="resizer" />
+        {link && (
+          <div style={{ position: "absolute", top: 10, right: -1 }}>
+            <Link />
+          </div>
+        )}
       </div>
-    )
+    );
   }
 }
 
-export default connect()(Event)
+export default connect()(Event);
